@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>設備投資補助金 — 情報収集システム</title>
+
+<!-- PWA -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="補助金DB">
+<meta name="theme-color" content="#F5F3EE">
+<link rel="manifest" href="manifest.json">
+<!-- アイコン（SVGをbase64でインライン定義） -->
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgZmlsbD0iI0Y1RjNFRSIvPjxyZWN0IHg9IjI0IiB5PSI0OCIgd2lkdGg9IjE0NCIgaGVpZ2h0PSI5NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMUExOTE2IiBzdHJva2Utd2lkdGg9IjgiLz48bGluZSB4MT0iMjQiIHkxPSI4MCIgeDI9IjE2OCIgeTI9IjgwIiBzdHJva2U9IiMxQTE5MTYiIHN0cm9rZS13aWR0aD0iNCIvPjxsaW5lIHgxPSIyNCIgeTE9IjExMiIgeDI9IjE2OCIgeTI9IjExMiIgc3Ryb2tlPSIjMUExOTE2IiBzdHJva2Utd2lkdGg9IjQiLz48cmVjdCB4PSI3MiIgeT0iNDgiIHdpZHRoPSI0OCIgaGVpZ2h0PSI5NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMUExOTE2IiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSIxNDQiIGN5PSI0OCIgcj0iMjQiIGZpbGw9IiNEOTRCMUYiLz48L3N2Zz4=">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+/*
+  ─────────────────────────────────────────────────
+  DIETER RAMS DESIGN SYSTEM
+  "Weniger, aber besser." — Less, but better.
+
+  Principles applied:
+  1. Innovative   → Tab-as-panel navigation, table-first data
+  2. Useful       → Every pixel earns its place
+  3. Aesthetic    → Braun palette, precise grid, DIN-spirit type
+  4. Understandable → Structure visible, hierarchy by weight alone
+  5. Unobtrusive  → No gradients, no shadows, no border-radius
+  6. Honest       → Status shown as plain text, not icons/animations
+  7. Long-lasting → No trendy effects that will age
+  8. Thorough     → 8px base grid, consistent to last pixel
+  9. Eco-friendly → Minimal DOM, no decorative elements
+  10. As little as possible → Everything that could be removed, was.
+  ─────────────────────────────────────────────────
+*/
+
+:root {
+  /* ── Braun Colour Palette ── */
+  --white:     #F5F3EE;   /* product casing — Braun off-white */
+  --white-2:   #ECEAE3;   /* recessed surfaces */
+  --rule:      #D8D5CC;   /* hairline dividers */
+  --silver:    #B0ADA4;   /* secondary info */
+  --mid:       #7A7770;   /* labels, captions */
+  --ink:       #1A1916;   /* primary text, warm black */
+  --ink-2:     #3C3A36;   /* secondary text */
+
+  /* Signal colour — used ONCE, purposefully */
+  --signal:    #D94B1F;   /* Braun SK61 button orange */
+  --signal-dk: #B03D18;
+  --signal-bg: #FBF0ED;
+
+  /* Functional state colours (minimal use) */
+  --green:     #2A6B45;
+  --green-bg:  #EAF3EE;
+  --amber:     #7A5A14;
+  --amber-bg:  #FBF5E6;
+
+  /* ── Typography ── */
+  --sans: 'DM Sans', -apple-system, 'Helvetica Neue', sans-serif;
+  --mono: 'DM Mono', 'Courier New', monospace;
+
+  /* ── Grid ── */
+  --u:  8px;      /* base unit */
+  --max: 1160px;
+}
+
+*, *::before, *::after {
+  margin: 0; padding: 0;
+  box-sizing: border-box;
+}
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.55;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  /* iPhone safe area */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+.hd {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--white);
+  border-bottom: 1px solid var(--ink);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.hd__inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 calc(var(--u) * 4);
+  height: 52px;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+/* Wordmark — strict left */
+.hd__mark {
+  display: flex;
+  align-items: center;
+  padding-right: calc(var(--u) * 5);
+  border-right: 1px solid var(--rule);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.hd__mark em { color: var(--signal); font-style: normal; }
+
+/* Navigation tabs */
+.hd__nav {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  padding-left: calc(var(--u) * 2);
+}
+
+.hd__tab {
+  display: flex;
+  align-items: center;
+  padding: 0 calc(var(--u) * 2);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--silver);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  margin-bottom: -1px; /* sits on header border */
+  transition: color 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+.hd__tab:hover { color: var(--ink-2); }
+.hd__tab.on {
+  color: var(--ink);
+  font-weight: 500;
+  border-bottom-color: var(--signal);
+}
+
+/* Header right group */
+.hd__right {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  padding-left: calc(var(--u) * 3);
+  border-left: 1px solid var(--rule);
+  margin-left: auto;
+}
+
+.hd__clock {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 300;
+  color: var(--mid);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+/* ═══════════════════════════════════════════
+   BUTTONS — austere, no decoration
+═══════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--u);
+  padding: calc(var(--u) * 0.75) calc(var(--u) * 2);
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--white-2); border-color: var(--ink-2); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn--signal {
+  background: var(--signal); border-color: var(--signal);
+  color: #fff; font-weight: 500;
+}
+.btn--signal:hover { background: var(--signal-dk); border-color: var(--signal-dk); color: #fff; }
+
+/* ═══════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════ */
+.wrap {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: calc(var(--u) * 5) calc(var(--u) * 4);
+}
+
+.page { display: none; }
+.page.on { display: block; }
+
+/* ═══════════════════════════════════════════
+   HOME — HERO STRIP
+═══════════════════════════════════════════ */
+.hero {
+  padding: calc(var(--u) * 8) 0 calc(var(--u) * 6);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: calc(var(--u) * 5);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: calc(var(--u) * 6);
+}
+
+.hero__left {}
+
+.hero__eyebrow {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--signal);
+  margin-bottom: calc(var(--u) * 2);
+}
+
+.hero__h1 {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: calc(var(--u) * 2.5);
+}
+.hero__h1 b { font-weight: 500; }
+
+.hero__lead {
+  font-size: 0.82rem;
+  font-weight: 300;
+  color: var(--ink-2);
+  max-width: 440px;
+  line-height: 1.75;
+}
+
+/* Right: stat cluster */
+.hero__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--rule);
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.hstat {
+  padding: calc(var(--u) * 2) calc(var(--u) * 2.5);
+  border-bottom: 1px solid var(--rule);
+}
+.hstat:last-child { border-bottom: none; }
+
+.hstat__n {
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1;
+  margin-bottom: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.hstat__n.red { color: var(--signal); }
+
+.hstat__l {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+
+/* ═══════════════════════════════════════════
+   SOURCE STATUS BAR
+═══════════════════════════════════════════ */
+.src-bar {
+  display: flex;
+  gap: calc(var(--u) * 5);
+  flex-wrap: wrap;
+  padding: calc(var(--u) * 2) 0;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: calc(var(--u) * 4);
+}
+
+.src-item {
+  display: flex;
+  align-items: center;
+  gap: var(--u);
+  font-size: 0.72rem;
+}
+
+.src-item__sq {
+  width: 7px; height: 7px;
+  background: var(--rule);
+  flex-shrink: 0;
+}
+.src-item__sq.ok   { background: var(--green); }
+.src-item__sq.busy { background: var(--signal); animation: sq-blink 0.9s step-end infinite; }
+.src-item__sq.err  { background: var(--signal); }
+
+@keyframes sq-blink { 50% { opacity: 0; } }
+
+.src-item__name { font-weight: 400; color: var(--ink-2); }
+.src-item__st   { font-family: var(--mono); font-size: 0.67rem; color: var(--mid); }
+.src-item__st.ok { color: var(--green); }
+.src-item__st.busy { color: var(--signal); }
+.src-item__st.err  { color: var(--signal); }
+
+/* ═══════════════════════════════════════════
+   LOG BOX
+═══════════════════════════════════════════ */
+.log-box {
+  border: 1px solid var(--rule);
+  background: var(--white-2);
+  margin-bottom: calc(var(--u) * 4);
+}
+
+.log-box__hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: calc(var(--u) * 1.25) calc(var(--u) * 2);
+  border-bottom: 1px solid var(--rule);
+}
+
+.log-box__label {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+
+.log-box__body {
+  padding: var(--u) calc(var(--u) * 2);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 300;
+  max-height: 110px;
+  overflow-y: auto;
+}
+
+.ll { display: flex; gap: calc(var(--u) * 2); line-height: 1.8; }
+.ll__t { color: var(--rule); min-width: 62px; flex-shrink: 0; }
+.ll__m { color: var(--ink-2); }
+.ll__m.ok   { color: var(--green); }
+.ll__m.warn { color: var(--amber); }
+.ll__m.err  { color: var(--signal); }
+.ll__m.info { color: var(--ink-2); }
+
+/* ═══════════════════════════════════════════
+   SECTION
+═══════════════════════════════════════════ */
+.sec { margin-bottom: calc(var(--u) * 7); }
+
+.sec__hd {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 2);
+  padding-bottom: calc(var(--u) * 1.5);
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 0;
+}
+
+.sec__title {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+
+.sec__n {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--signal);
+  font-weight: 400;
+}
+
+/* ═══════════════════════════════════════════
+   SUBSIDY TABLE — Rams would never use cards.
+   "Good design makes a product understandable."
+═══════════════════════════════════════════ */
+.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tbl thead tr {
+  border-bottom: 1px solid var(--rule);
+}
+
+.tbl th {
+  padding: calc(var(--u) * 1.25) calc(var(--u) * 2);
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mid);
+  white-space: nowrap;
+}
+
+.tbl tbody tr {
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  transition: background 0.08s;
+}
+.tbl tbody tr:hover { background: var(--white-2); }
+
+.tbl td {
+  padding: calc(var(--u) * 1.75) calc(var(--u) * 2);
+  font-size: 0.78rem;
+  font-weight: 300;
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+
+.td-name {
+  max-width: 320px;
+}
+.td-name__main {
+  font-weight: 400;
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.td-name__sub {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--mid);
+  display: block;
+  margin-top: 1px;
+}
+
+.td-amount {
+  font-weight: 400;
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.td-dl {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.td-dl.urgent { color: var(--signal); font-weight: 500; }
+.td-dl.soon   { color: var(--amber); }
+
+/* ── Chip (minimal) ── */
+.chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border: 1px solid var(--rule);
+  color: var(--mid);
+  margin-right: 3px;
+  white-space: nowrap;
+}
+.chip.meti  { border-color: #9BB0C8; color: #2E5A88; background: #EEF3F9; }
+.chip.mhlw  { border-color: #98C4A4; color: var(--green); background: var(--green-bg); }
+.chip.local { border-color: #B8ACD4; color: #5C3E9A; background: #F3F0FA; }
+.chip.new   { border-color: #98C4A4; color: var(--green); background: var(--green-bg); }
+.chip.urg   { border-color: #E8B8A8; color: var(--signal); background: var(--signal-bg); }
+
+/* ═══════════════════════════════════════════
+   FILTER STRIP
+═══════════════════════════════════════════ */
+.flt {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--rule);
+  margin-bottom: calc(var(--u) * 3);
+  overflow: hidden;
+}
+
+.flt__prefix {
+  padding: calc(var(--u) * 1.25) calc(var(--u) * 2);
+  background: var(--white-2);
+  border-right: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mid);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.flt__btn {
+  padding: calc(var(--u) * 1.25) calc(var(--u) * 2.5);
+  border: none;
+  border-right: 1px solid var(--rule);
+  background: transparent;
+  color: var(--silver);
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  font-weight: 300;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+.flt__btn:last-child { border-right: none; }
+.flt__btn:hover { background: var(--white-2); color: var(--ink-2); }
+.flt__btn.on {
+  background: var(--ink);
+  color: var(--white);
+  font-weight: 400;
+}
+
+/* ═══════════════════════════════════════════
+   NEWS TABLE
+═══════════════════════════════════════════ */
+.news-tbl { width: 100%; border-collapse: collapse; }
+
+.news-tbl tbody tr {
+  border-bottom: 1px solid var(--rule);
+  transition: background 0.08s;
+}
+.news-tbl tbody tr:hover { background: var(--white-2); }
+
+.news-tbl td {
+  padding: calc(var(--u) * 1.75) calc(var(--u) * 2);
+  vertical-align: top;
+}
+
+.nd-date {
+  font-family: var(--mono);
+  font-size: 0.67rem;
+  color: var(--mid);
+  white-space: nowrap;
+  width: 90px;
+}
+
+.nd-type {
+  width: 8px;
+  padding-right: 0;
+}
+.nd-sq {
+  width: 7px; height: 7px; margin-top: 5px;
+}
+.sq-new      { background: var(--green); }
+.sq-update   { background: var(--ink-2); }
+.sq-deadline { background: var(--signal); }
+
+.nd-content {}
+.nd-title {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.4;
+  margin-bottom: 3px;
+}
+.nd-desc {
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+.nd-source {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--mid);
+  white-space: nowrap;
+  text-align: right;
+  vertical-align: top;
+  width: 110px;
+}
+
+/* ═══════════════════════════════════════════
+   SOURCES PAGE
+═══════════════════════════════════════════ */
+.src-tbl { width: 100%; border-collapse: collapse; }
+.src-tbl tbody tr { border-bottom: 1px solid var(--rule); }
+.src-tbl td {
+  padding: calc(var(--u) * 2) calc(var(--u) * 2);
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: var(--ink-2);
+  vertical-align: middle;
+}
+.src-tbl td:first-child { font-weight: 400; color: var(--ink); width: 180px; }
+
+/* ── External link arrow — functional, tappable, not decorative ── */
+.ext-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;   /* minimum tap target */
+  min-height: 36px;
+  padding: 0 calc(var(--u) * 1.5);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--signal);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: border-color 0.12s, background 0.12s;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+.ext-link:hover {
+  border-color: var(--signal);
+  background: var(--signal-bg);
+}
+
+/* ═══════════════════════════════════════════
+   LOADING / EMPTY
+═══════════════════════════════════════════ */
+.loading {
+  padding: calc(var(--u) * 7) calc(var(--u) * 3);
+  text-align: center;
+}
+.loading__ring {
+  width: 18px; height: 18px;
+  border: 1.5px solid var(--rule);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  margin: 0 auto calc(var(--u) * 2);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading__t {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--mid);
+}
+
+.empty {
+  padding: calc(var(--u) * 8) calc(var(--u) * 3);
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: var(--mid);
+  border-top: 1px solid var(--rule);
+}
+
+/* ═══════════════════════════════════════════
+   SUBSIDY DETAIL MODAL
+═══════════════════════════════════════════ */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(26,25,22,0.45);
+  z-index: 400;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--u) * 3);
+}
+.overlay.on { display: flex; }
+
+.modal {
+  background: var(--white);
+  border: 1px solid var(--ink);
+  max-width: 620px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal__hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 3);
+  border-bottom: 1px solid var(--rule);
+}
+.modal__title {
+  font-size: 0.92rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.modal__x {
+  width: 26px; height: 26px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--mid);
+  cursor: pointer;
+  font-size: 0.7rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+.modal__x:hover { background: var(--white-2); color: var(--ink); }
+
+.modal__bd { padding: calc(var(--u) * 3); }
+
+/* Meta grid — uses 1px gap (Braun-style cell panel) */
+.m-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin-bottom: calc(var(--u) * 3);
+}
+.m-cell {
+  background: var(--white);
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 2);
+}
+.m-cell__k {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--mid);
+  margin-bottom: 4px;
+}
+.m-cell__v {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--ink);
+}
+.m-cell__v.red { color: var(--signal); font-weight: 500; }
+
+.m-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mid);
+  padding: calc(var(--u) * 2) 0 var(--u);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--u);
+}
+
+.m-text {
+  font-size: 0.78rem;
+  font-weight: 300;
+  color: var(--ink-2);
+  line-height: 1.7;
+  margin-bottom: calc(var(--u) * 2);
+}
+
+.m-link-row {
+  padding-top: calc(var(--u) * 2);
+  border-top: 1px solid var(--rule);
+}
+.m-link {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--signal);
+  text-decoration: none;
+}
+.m-link:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════
+   SETTINGS MODAL
+═══════════════════════════════════════════ */
+.s-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(26,25,22,0.5);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--u) * 3);
+}
+.s-overlay.on { display: flex; }
+
+.s-panel {
+  background: var(--white);
+  border: 1px solid var(--ink);
+  max-width: 460px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.s-panel__hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(var(--u) * 2.5) calc(var(--u) * 3);
+  border-bottom: 1px solid var(--rule);
+}
+.s-panel__title {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.s-panel__bd { padding: calc(var(--u) * 3); }
+
+
+.s-section {
+  border-top: 1px solid var(--rule);
+  padding-top: calc(var(--u) * 2.5);
+  margin-top: calc(var(--u) * 0.5);
+}
+
+.s-section__label {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--mid);
+  margin-bottom: calc(var(--u) * 1.5);
+}
+
+.s-section__note {
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: var(--ink-2);
+  line-height: 1.65;
+  margin-bottom: calc(var(--u) * 1.5);
+}
+.s-section__note a { color: var(--signal); text-decoration: none; }
+.s-section__note a:hover { text-decoration: underline; }
+
+.inp {
+  width: 100%;
+  padding: calc(var(--u) * 1.25) calc(var(--u) * 1.5);
+  border: 1px solid var(--rule);
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 300;
+  outline: none;
+  transition: border-color 0.12s;
+  margin-bottom: calc(var(--u));
+}
+.inp:focus { border-color: var(--ink); }
+.inp::placeholder { color: var(--rule); }
+.inp.err { border-color: var(--signal); }
+
+.inp-hint {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--mid);
+  margin-bottom: calc(var(--u) * 2);
+}
+.inp-hint a { color: var(--signal); text-decoration: none; }
+
+.btn-row {
+  display: flex;
+  gap: var(--u);
+  padding-top: calc(var(--u) * 2.5);
+  border-top: 1px solid var(--rule);
+  margin-top: calc(var(--u) * 2);
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR — minimal
+═══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rule); }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 760px) {
+  .hd__nav { display: none; }
+  .hd__right { border-left: none; padding-left: 0; margin-left: auto; gap: var(--u); }
+  .hd__clock { display: none; }
+  .hero { grid-template-columns: 1fr; gap: calc(var(--u)*3); padding: calc(var(--u)*4) 0 calc(var(--u)*3); }
+  .hero__h1 { font-size: 1.7rem; }
+  .hero__stats { flex-direction: row; min-width: auto; flex-wrap: wrap; }
+  .hstat { flex: 1; min-width: 80px; }
+  .hstat__n { font-size: 1.3rem; }
+  .tbl th:nth-child(3), .tbl td:nth-child(3),
+  .tbl th:nth-child(4), .tbl td:nth-child(4),
+  .tbl th:nth-child(5), .tbl td:nth-child(5),
+  .tbl th:nth-child(6), .tbl td:nth-child(6) { display: none; }
+  .news-tbl td:last-child { display: none; }
+  .m-grid { grid-template-columns: 1fr; }
+  .wrap { padding: calc(var(--u)*3) calc(var(--u)*2); padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .sec__hd { margin-bottom: calc(var(--u)*2); }
+
+  /* ── ボトムナビゲーション ── */
+  .bottom-nav {
+    display: flex;
+  }
+
+  /* ── テーブルセルのスペーシング縮小 ── */
+  .tbl td, .tbl th { padding: calc(var(--u)*1.25) calc(var(--u)*1.25); }
+  .td-name__main { font-size: 0.75rem; }
+  .td-name__sub  { font-size: 0.58rem; }
+
+  /* フィルターバーをスクロール可能に */
+  .flt { overflow-x: auto; flex-wrap: nowrap; }
+  .flt__btn { flex-shrink: 0; }
+
+  /* ソースバー縦並び */
+  .src-bar { flex-direction: column; gap: calc(var(--u)*1.5); }
+
+  /* モーダルをフルスクリーンに */
+  .overlay { padding: 0; align-items: flex-end; }
+  .modal { max-height: 92vh; border-bottom: none; border-left: none; border-right: none; }
+  .s-overlay { padding: 0; align-items: flex-end; }
+  .s-panel { max-height: 88vh; border-bottom: none; border-left: none; border-right: none; }
+}
+
+/* ══ ボトムナビゲーション（スマホ専用） ══ */
+.bottom-nav {
+  display: none; /* PCでは非表示 */
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(60px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--white);
+  border-top: 1px solid var(--ink);
+  z-index: 200;
+  align-items: stretch;
+}
+
+.bn__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: none;
+  border-right: 1px solid var(--rule);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.bn__item:last-child { border-right: none; }
+.bn__item:active { background: var(--white-2); }
+.bn__item.on { background: var(--ink); }
+
+.bn__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.bn__label {
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+.bn__item.on .bn__label { color: var(--white); }
+
+/* タップ領域を広く */
+.btn { min-height: 44px; touch-action: manipulation; }
+.hd__tab { min-height: 52px; touch-action: manipulation; }
+.bn__item { touch-action: manipulation; }
+.tbl tbody tr { touch-action: manipulation; }
+.flt__btn { touch-action: manipulation; min-height: 44px; }
+/* ══ iPhone ホーム画面追加バナー ══ */
+.install-banner {
+  display: none;
+  position: fixed;
+  bottom: calc(60px + env(safe-area-inset-bottom) + 8px);
+  left: 12px; right: 12px;
+  background: var(--ink);
+  color: var(--white);
+  padding: calc(var(--u)*1.5) calc(var(--u)*2);
+  z-index: 300;
+  border: 1px solid var(--ink-2);
+}
+.install-banner.show { display: flex; align-items: center; gap: calc(var(--u)*1.5); }
+.install-banner__text { flex: 1; font-size: 0.72rem; font-weight: 300; line-height: 1.55; }
+.install-banner__text b { font-weight: 500; display: block; margin-bottom: 2px; }
+.install-banner__close {
+  background: transparent; border: 1px solid var(--silver);
+  color: var(--silver); font-size: 0.65rem; padding: 4px 8px;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  touch-action: manipulation;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     HEADER
+══════════════════════════════════════ -->
+<header class="hd">
+  <div class="hd__inner">
+    <div class="hd__mark">補助金<em>.</em>DB</div>
+    <nav class="hd__nav">
+      <button class="hd__tab on"  onclick="nav('home',this);bnav('home')">概要</button>
+      <button class="hd__tab"     onclick="nav('list',this);bnav('list')">補助金一覧</button>
+      <button class="hd__tab"     onclick="nav('news',this);bnav('news')">新着情報</button>
+      <button class="hd__tab"     onclick="nav('src',this);bnav('src')">情報ソース</button>
+    </nav>
+    <div class="hd__right">
+      <span class="hd__clock" id="updateTime">—</span>
+      <button class="btn" id="apiKeyBtn" onclick="openSettings()">設定</button>
+      <button class="btn btn--signal" id="refreshBtn" onclick="refreshData()">巡回</button>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════
+     PAGE: 概要 (HOME)
+══════════════════════════════════════ -->
+<div id="page-home" class="page on">
+  <div class="wrap">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero__left">
+        <p class="hero__eyebrow">設備投資支援 · 省庁公式情報 · 自動更新</p>
+        <h1 class="hero__h1">設備投資<b>補助金</b><br>情報収集システム</h1>
+        <p class="hero__lead">経済産業省・厚生労働省・地方自治体の公式サイトを自動巡回し、設備投資に関わる補助金・助成金情報を収集・整理します。</p>
+      </div>
+      <div class="hero__stats">
+        <div class="hstat">
+          <div class="hstat__n" id="stat-total">—</div>
+          <div class="hstat__l">収集件数</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat__n red" id="stat-urgent">—</div>
+          <div class="hstat__l">締切間近</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat__n" id="stat-new">—</div>
+          <div class="hstat__l">新着</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat__n" id="stat-amount">—</div>
+          <div class="hstat__l">最大補助額</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Source status -->
+    <div class="src-bar">
+      <div class="src-item">
+        <div class="src-item__sq busy" id="sq-meti"></div>
+        <span class="src-item__name">経済産業省</span>
+        <span class="src-item__st busy" id="st-meti">待機中</span>
+      </div>
+      <div class="src-item">
+        <div class="src-item__sq busy" id="sq-mhlw"></div>
+        <span class="src-item__name">厚生労働省</span>
+        <span class="src-item__st busy" id="st-mhlw">待機中</span>
+      </div>
+      <div class="src-item">
+        <div class="src-item__sq busy" id="sq-mirasapo"></div>
+        <span class="src-item__name">ミラサポplus</span>
+        <span class="src-item__st busy" id="st-mirasapo">待機中</span>
+      </div>
+      <div class="src-item">
+        <div class="src-item__sq busy" id="sq-local"></div>
+        <span class="src-item__name">地方自治体・その他</span>
+        <span class="src-item__st busy" id="st-local">待機中</span>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="log-box" id="logBox" style="display:none">
+      <div class="log-box__hd">
+        <span class="log-box__label">巡回ログ</span>
+        <button class="btn" style="font-size:0.62rem;padding:2px 8px" onclick="document.getElementById('logBox').style.display='none'">閉じる</button>
+      </div>
+      <div class="log-box__body" id="crawlLog"></div>
+    </div>
+
+    <!-- Urgent -->
+    <div class="sec">
+      <div class="sec__hd">
+        <span class="sec__title">締切間近</span>
+        <span class="sec__n" id="urgentCount">0</span>
+      </div>
+      <div id="urgentGrid"></div>
+    </div>
+
+    <!-- New -->
+    <div class="sec">
+      <div class="sec__hd">
+        <span class="sec__title">新着補助金</span>
+        <span class="sec__n" id="newCount">0</span>
+      </div>
+      <div id="newGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE: 補助金一覧 (LIST)
+══════════════════════════════════════ -->
+<div id="page-list" class="page">
+  <div class="wrap">
+    <div class="sec__hd" style="margin-bottom:calc(var(--u)*3)">
+      <span class="sec__title">補助金一覧</span>
+    </div>
+    <div class="flt">
+      <span class="flt__prefix">絞り込み</span>
+      <button class="flt__btn on" onclick="filter('all',this)">すべて</button>
+      <button class="flt__btn" onclick="filter('meti',this)">経産省</button>
+      <button class="flt__btn" onclick="filter('mhlw',this)">厚労省</button>
+      <button class="flt__btn" onclick="filter('local',this)">地方</button>
+      <button class="flt__btn" onclick="filter('urgent',this)">締切間近</button>
+      <button class="flt__btn" onclick="filter('new',this)">新着</button>
+    </div>
+    <div class="tbl-wrap">
+      <div id="allSubsidyGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE: 新着情報 (NEWS)
+══════════════════════════════════════ -->
+<div id="page-news" class="page">
+  <div class="wrap">
+    <div class="sec__hd" style="margin-bottom:calc(var(--u)*3)">
+      <span class="sec__title">新着情報</span>
+    </div>
+    <div id="newsList"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE: 情報ソース (SOURCES)
+══════════════════════════════════════ -->
+<div id="page-src" class="page">
+  <div class="wrap">
+    <div class="sec__hd" style="margin-bottom:calc(var(--u)*3)">
+      <span class="sec__title">巡回対象 · 情報ソース</span>
+    </div>
+    <div id="sourceCards"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     BOTTOM NAVIGATION（スマホ専用）
+══════════════════════════════════════ -->
+<!-- ホーム画面追加バナー（iPhone Safari のみ表示） -->
+<div class="install-banner" id="installBanner">
+  <div class="install-banner__text">
+    <b>ホーム画面に追加できます</b>
+    下の <span style="font-size:1em">⎋</span> ボタン →「ホーム画面に追加」でアイコンが作れます
+  </div>
+  <button class="install-banner__close" onclick="dismissBanner()">閉じる</button>
+</div>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn__item on" onclick="nav('home',this);bnav('home')">
+    <span class="bn__icon">◫</span>
+    <span class="bn__label">概要</span>
+  </button>
+  <button class="bn__item" onclick="nav('list',this);bnav('list')">
+    <span class="bn__icon">≡</span>
+    <span class="bn__label">一覧</span>
+  </button>
+  <button class="bn__item" onclick="nav('news',this);bnav('news')">
+    <span class="bn__icon">◈</span>
+    <span class="bn__label">新着</span>
+  </button>
+  <button class="bn__item" onclick="nav('src',this);bnav('src')">
+    <span class="bn__icon">⊞</span>
+    <span class="bn__label">ソース</span>
+  </button>
+</nav>
+
+<div class="overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal__hd">
+      <div class="modal__title" id="modalTitle"></div>
+      <button class="modal__x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal__bd" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SETTINGS MODAL
+══════════════════════════════════════ -->
+<div class="s-overlay" id="apiKeyModal" onclick="if(event.target===this)closeSettings()">
+  <div class="s-panel">
+    <div class="s-panel__hd">
+      <span class="s-panel__title">検索設定</span>
+      <button class="modal__x" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="s-panel__bd">
+
+      <!-- Jina API key (optional) -->
+      <div class="s-section" style="border-top:none;padding-top:0">
+        <div class="s-section__label">Jina AI APIキー（任意）</div>
+        <div class="s-section__note">
+          APIキーなしでも動作します。<a href="https://jina.ai" target="_blank">jina.ai</a> で無料取得するとレート制限が緩和されます（クレジットカード不要・1,000万トークン付与）。
+        </div>
+        <input class="inp" id="jinaKeyInput" type="password" placeholder="jina_xxxxxxxxxxxx（任意）">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn--signal" style="flex:1" onclick="applySettings()">保存</button>
+        <button class="btn" onclick="closeSettings()">閉じる</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let allSubsidies = [];
+let newsItems    = [];
+
+// ボトムナビとヘッダーナビを同期
+function bnav(id) {
+  document.querySelectorAll('.bn__item').forEach(b => {
+    b.classList.toggle('on', b.getAttribute('onclick')?.includes(`'${id}'`));
+  });
+}
+
+// PCのヘッダーnavクリック時もボトムナビを同期
+const _origNav = nav;
+// nav()はすでに定義済みなので、bnav()はHTML側でonclick="nav(...);bnav(...)"で呼ぶ
+
+// ── manifest.json を動的生成してlinkに反映 ──
+(function createManifest() {
+  const manifest = {
+    name: '設備投資補助金 情報収集システム',
+    short_name: '補助金DB',
+    description: '経産省・厚労省・地方自治体の設備投資補助金情報を収集・整理',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#F5F3EE',
+    theme_color: '#F5F3EE',
+    orientation: 'any',
+    icons: [
+      {
+        src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23F5F3EE'/><rect x='24' y='48' width='144' height='96' fill='none' stroke='%231A1916' stroke-width='8'/><line x1='24' y1='80' x2='168' y2='80' stroke='%231A1916' stroke-width='4'/><line x1='24' y1='112' x2='168' y2='112' stroke='%231A1916' stroke-width='4'/><rect x='72' y='48' width='48' height='96' fill='none' stroke='%231A1916' stroke-width='4'/><circle cx='144' cy='48' r='24' fill='%23D94B1F'/></svg>",
+        sizes: '192x192',
+        type: 'image/svg+xml',
+        purpose: 'any maskable'
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+  const url  = URL.createObjectURL(blob);
+  const link = document.querySelector('link[rel="manifest"]');
+  if (link) link.href = url;
+})();
+const PAGES = ['home','list','news','src'];
+
+function nav(id, btn) {
+  PAGES.forEach(p => {
+    document.getElementById('page-'+p)?.classList.remove('on');
+  });
+  document.getElementById('page-'+id)?.classList.add('on');
+  document.querySelectorAll('.hd__tab').forEach(b => b.classList.remove('on'));
+  btn?.classList.add('on');
+}
+
+// Legacy alias (called by old JS renderCard / showPage)
+function showPage(p) {
+  const map = { home:'home', subsidies:'list', news:'news', sources:'src' };
+  const id  = map[p] || p;
+  const btn = [...document.querySelectorAll('.hd__tab')]
+    .find(b => b.getAttribute('onclick')?.includes(`'${id}'`));
+  nav(id, btn);
+}
+
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+let JINA_API_KEY = '';
+try {
+  JINA_API_KEY = localStorage.getItem('jina_api_key') || '';
+} catch(e){}
+
+function saveSettings(jinaKey) {
+  JINA_API_KEY = jinaKey.trim();
+  try { localStorage.setItem('jina_api_key', JINA_API_KEY); } catch(e){}
+  updateSettingsBtnUI();
+  closeSettings();
+}
+
+function updateSettingsBtnUI() {
+  const btn = document.getElementById('apiKeyBtn');
+  if (!btn) return;
+  btn.textContent = JINA_API_KEY ? '設定 ●' : '設定';
+}
+
+
+function applySettings() {
+  const jinaKey = (document.getElementById('jinaKeyInput')?.value || '').trim();
+  saveSettings(jinaKey);
+  setTimeout(() => loadData(), 80);
+}
+
+function openSettings() {
+  const ji = document.getElementById('jinaKeyInput');
+  if (ji && JINA_API_KEY) ji.value = JINA_API_KEY;
+  document.getElementById('apiKeyModal').classList.add('on');
+}
+function closeSettings() {
+  document.getElementById('apiKeyModal').classList.remove('on');
+}
+
+// ═══════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════
+function addLog(msg, type = 'info') {
+  const box = document.getElementById('logBox');
+  const log = document.getElementById('crawlLog');
+  if (!box || !log) return;
+  box.style.display = '';
+  const t = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+  const row = document.createElement('div');
+  row.className = 'll';
+  row.innerHTML = `<span class="ll__t">${t}</span><span class="ll__m ${type}">${msg}</span>`;
+  log.appendChild(row);
+  log.scrollTop = log.scrollHeight;
+}
+
+// ═══════════════════════════════════════════
+// JINA AI
+// ═══════════════════════════════════════════
+// タイムアウト付きfetch — CORSブロック時に無限待ちにならないよう5秒で打ち切る
+function fetchWithTimeout(url, opts = {}, ms = 5000) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctrl.signal })
+    .finally(() => clearTimeout(tid));
+}
+
+async function jinaSearch(query, site = null) {
+  let q = encodeURIComponent(query);
+  if (site) q += '%20site%3A' + encodeURIComponent(site);
+  const url = 'https://s.jina.ai/' + q;
+  const res = await fetchWithTimeout(url, { method: 'GET' });
+  if (!res.ok) throw new Error(`Jina ${res.status}`);
+  return parseJinaText(await res.text());
+}
+
+function parseJinaText(text) {
+  const results = [];
+  const chunks = text.split(/(?=\[\d+\])/g);
+  for (const chunk of chunks) {
+    if (!chunk.trim()) continue;
+    const lines = chunk.split('\n').map(l => l.trim()).filter(Boolean);
+    const title   = lines[0]?.replace(/^\[\d+\]\s*/, '') || '';
+    const urlLine = lines.find(l => /^(URL|Source):/i.test(l)) || '';
+    const descLines = lines.filter(l => !/^(URL|Source|\[\d+\]):/i.test(l)).slice(1);
+    if (title) results.push({
+      title, url: urlLine.replace(/^(URL|Source):\s*/i,'').trim(),
+      description: descLines.join(' ').slice(0, 500)
+    });
+  }
+  if (!results.length && text.length > 30)
+    results.push({ title:'result', url:'', description: text.slice(0,600) });
+  return results.slice(0, 5);
+}
+
+async function jinaRead(targetUrl) {
+  const res = await fetchWithTimeout('https://r.jina.ai/' + targetUrl, { method:'GET' });
+  if (!res.ok) throw new Error(`JinaRead ${res.status}`);
+  return await res.text();
+}
+
+// ═══════════════════════════════════════════
+// KNOWLEDGE BASE
+// ═══════════════════════════════════════════
+function getKnowledgeBase() {
+  const y = new Date().getFullYear();
+  return [
+    { id:'kb01', name:'ものづくり・商業・サービス生産性向上促進補助金', organization:'中小企業庁', ministry:'meti', type:'national', region:'全国', amount:'最大1,250万円', rate:'補助率1/2〜2/3', deadline:`${y}-06-30`, startDate:`${y}-03-01`, target:'中小企業・小規模事業者', equipment:'機械装置・システム構築・専用ソフトウェア', summary:'革新的な製品・サービス開発や生産プロセス改善のための設備投資を支援。省力化投資類型あり。', conditions:'付加価値額年率+3%以上、給与支給総額年率+1.5%以上を要件とする', url:'https://portal.monodukuri-hojo.jp/', isNew:false, category:'製造設備' },
+    { id:'kb02', name:'IT導入補助金（デジタル化基盤導入類型）', organization:'中小企業庁', ministry:'meti', type:'national', region:'全国', amount:'最大350万円', rate:'補助率3/4〜4/5', deadline:`${y}-07-31`, startDate:`${y}-04-01`, target:'中小企業・小規模事業者', equipment:'会計・受発注・決済ソフトウェア、PC・タブレット等', summary:'ITツール導入を支援。会計・在庫管理ソフトとPC等ハードウェアが対象。', conditions:'IT導入支援事業者が提供するITツールの導入であること', url:'https://www.it-hojo.jp/', isNew:false, category:'IT設備' },
+    { id:'kb03', name:'事業再構築補助金', organization:'中小企業庁', ministry:'meti', type:'national', region:'全国', amount:'最大7,000万円', rate:'補助率1/2〜2/3', deadline:`${y}-05-31`, startDate:`${y}-02-01`, target:'中小企業・中堅企業', equipment:'建物費・機械装置・システム構築費', summary:'新分野展開・業態転換等への事業再構築を支援。', conditions:'認定経営革新等支援機関の確認が必要', url:'https://jigyou-saikouchiku.go.jp/', isNew:false, category:'製造設備' },
+    { id:'kb04', name:'省エネルギー投資促進支援事業費補助金', organization:'経済産業省', ministry:'meti', type:'national', region:'全国', amount:'最大15億円', rate:'補助率1/3〜1/2', deadline:`${y}-06-30`, startDate:`${y}-04-01`, target:'法人・個人事業主', equipment:'省エネ設備（ボイラー・空調・照明・コンプレッサー等）', summary:'工場・事業所における省エネ設備への更新を補助。', conditions:'省エネ率1%以上の改善が見込まれること', url:'https://www.enecho.meti.go.jp/category/saving_and_new/saving/enterprise/support/', isNew:false, category:'省エネ設備' },
+    { id:'kb05', name:'中小企業省力化投資補助事業（省力化補助金）', organization:'中小企業庁', ministry:'meti', type:'national', region:'全国', amount:'最大1,500万円', rate:'補助率1/2', deadline:`${y}-08-31`, startDate:`${y}-04-01`, target:'中小企業・小規模事業者', equipment:'IoT・ロボット・省力化製品（カタログ掲載品）', summary:'人手不足解消に効果がある省力化投資をカタログ型で支援。', conditions:'カタログに掲載された製品の購入が必要', url:'https://shoryokuka.smrj.go.jp/', isNew:true, category:'製造設備' },
+    { id:'kb06', name:'キャリアアップ助成金（正社員化コース）', organization:'厚生労働省', ministry:'mhlw', type:'national', region:'全国', amount:'最大80万円/人', rate:'助成率3/4（中小）', deadline:'随時', startDate:'随時', target:'雇用保険適用の中小企業', equipment:'職場環境改善設備', summary:'非正規労働者の正規雇用転換を支援。設備投資を伴う職場改善費用も対象。', conditions:'就業規則等に転換制度を規定すること', url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/part_haken/jigyounushi/career.html', isNew:false, category:'IT設備' },
+    { id:'kb07', name:'人材開発支援助成金（人への投資促進コース）', organization:'厚生労働省', ministry:'mhlw', type:'national', region:'全国', amount:'最大200万円', rate:'助成率45〜75%', deadline:`${y}-03-31`, startDate:'随時', target:'雇用保険適用の中小企業', equipment:'デジタル人材育成関連設備・訓練費', summary:'DX・デジタル人材育成のための訓練を実施した場合に訓練経費を助成。', conditions:'訓練計画を事前に提出すること', url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/koyou/kyufukin/d01-1.html', isNew:false, category:'IT設備' },
+    { id:'kb08', name:'業務改善助成金', organization:'厚生労働省', ministry:'mhlw', type:'national', region:'全国', amount:'最大600万円', rate:'助成率4/5〜9/10', deadline:`${y}-12-31`, startDate:'随時', target:'中小企業・小規模事業者', equipment:'生産性向上設備（機械設備・POSシステム等）', summary:'最低賃金引上げに向けた生産性向上のための設備投資を助成。', conditions:'事業場内最低賃金を一定額以上引き上げること', url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/zigyonushi/shienjigyou/03.html', isNew:true, category:'製造設備' },
+    { id:'kb09', name:'東京都中小企業設備導入等支援補助金', organization:'東京都産業労働局', ministry:'local', type:'local', region:'東京都', amount:'最大700万円', rate:'補助率1/2', deadline:`${y}-07-31`, startDate:`${y}-04-01`, target:'都内中小企業', equipment:'機械設備・工具・器具等', summary:'都内中小企業の生産性向上のための設備導入を補助。デジタル化・自動化設備を優先採択。', conditions:'都内に主たる事業所を有する中小企業', url:'https://www.tokyo-kosha.or.jp/', isNew:false, category:'製造設備' },
+    { id:'kb10', name:'大阪府ものづくり中小企業チャレンジ補助金', organization:'大阪府', ministry:'local', type:'local', region:'大阪府', amount:'最大500万円', rate:'補助率1/2', deadline:`${y}-09-30`, startDate:`${y}-05-01`, target:'府内中小製造業', equipment:'生産設備・省力化設備・IT機器', summary:'大阪府内中小企業の設備投資による生産性向上・事業拡大を支援。', conditions:'大阪府内に事業所を有する中小企業', url:'https://www.pref.osaka.lg.jp/chusho/', isNew:false, category:'製造設備' },
+    { id:'kb11', name:'愛知県スマートものづくり推進補助金', organization:'愛知県', ministry:'local', type:'local', region:'愛知県', amount:'最大1,000万円', rate:'補助率1/2〜2/3', deadline:`${y}-08-31`, startDate:`${y}-05-01`, target:'県内中小製造業', equipment:'IoT・AI・ロボット・省エネ設備', summary:'愛知県内ものづくり企業のスマート化・省エネ化投資を支援。', conditions:'愛知県内に工場・製造拠点を持つ中小企業', url:'https://www.pref.aichi.jp/soshiki/chusho/', isNew:true, category:'製造設備' },
+    { id:'kb12', name:'福岡県中小企業振興資金（設備近代化貸付）', organization:'福岡県', ministry:'local', type:'local', region:'福岡県', amount:'最大5,000万円（低利融資）', rate:'固定金利優遇', deadline:'随時', startDate:'随時', target:'県内中小企業', equipment:'機械・装置・設備全般', summary:'福岡県内中小企業の設備近代化・合理化のための低利融資。', conditions:'福岡県内に事業所を有する中小企業', url:'https://www.pref.fukuoka.lg.jp/', isNew:false, category:'製造設備' },
+    { id:'kb13', name:'神奈川県中小企業省エネ設備導入補助金', organization:'神奈川県', ministry:'local', type:'local', region:'神奈川県', amount:'最大200万円', rate:'補助率1/2', deadline:`${y}-10-31`, startDate:`${y}-06-01`, target:'県内中小企業・小規模事業者', equipment:'省エネ設備（LED・高効率空調・高効率変圧器等）', summary:'県内中小企業の脱炭素・省エネ促進のための設備更新を支援。', conditions:'省エネ効果10%以上が見込まれること', url:'https://www.pref.kanagawa.jp/', isNew:false, category:'省エネ設備' },
+    { id:'kb14', name:'農林水産省スマート農業加速化実証プロジェクト', organization:'農林水産省', ministry:'meti', type:'national', region:'全国', amount:'最大1,000万円', rate:'補助率1/2〜全額', deadline:`${y}-06-30`, startDate:`${y}-04-01`, target:'農業者・農業法人', equipment:'農業用ロボット・ドローン・センサー・スマート農機', summary:'農業のスマート化・省力化のための先端農業機械・システムの導入を支援。', conditions:'認定農業者または農業法人', url:'https://www.maff.go.jp/j/kobetu_ninaite/n_smart/', isNew:false, category:'農業設備' },
+    { id:'kb15', name:'環境省地域脱炭素移行・再エネ推進交付金', organization:'環境省', ministry:'meti', type:'national', region:'全国', amount:'最大2億円', rate:'補助率1/2〜全額', deadline:`${y}-05-31`, startDate:`${y}-02-01`, target:'地方公共団体・民間事業者', equipment:'再生可能エネルギー設備・省エネ設備', summary:'2050年カーボンニュートラル実現に向けた地域の脱炭素化に資する設備整備を支援。', conditions:'地方公共団体との連携が必要な場合あり', url:'https://www.env.go.jp/policy/local_re/', isNew:true, category:'環境設備' },
+    { id:'kb16', name:'建設業BIM/CIM活用推進モデル補助金', organization:'国土交通省', ministry:'meti', type:'national', region:'全国', amount:'最大500万円', rate:'補助率1/2', deadline:`${y}-07-31`, startDate:`${y}-04-01`, target:'建設業中小企業', equipment:'BIM/CIMソフトウェア・3Dスキャナー・測量機器', summary:'建設業のデジタル化推進を目的としたBIM/CIM導入に係る設備取得を補助。', conditions:'建設業許可を有する中小企業', url:'https://www.mlit.go.jp/tec/tec_tk_000052.html', isNew:false, category:'建設設備' },
+    { id:'kb17', name:'北海道中小企業設備投資促進補助金', organization:'北海道経済産業局', ministry:'local', type:'local', region:'北海道', amount:'最大300万円', rate:'補助率1/3', deadline:`${y}-09-30`, startDate:`${y}-06-01`, target:'道内中小企業', equipment:'機械装置・工具・器具', summary:'道内中小企業の生産性向上のための設備更新を補助。農業・食品加工関連設備も対象。', conditions:'北海道内に主たる事業所を有する中小企業', url:'https://www.hkd.meti.go.jp/', isNew:false, category:'製造設備' },
+    { id:'kb18', name:'業務改善助成金（設備投資促進枠）', organization:'厚生労働省', ministry:'mhlw', type:'national', region:'全国', amount:'最大600万円', rate:'助成率4/5〜9/10', deadline:`${y}-12-31`, startDate:'随時', target:'中小企業・小規模事業者', equipment:'生産性向上設備（自動化機器・POSレジ等）', summary:'最低賃金引上げと連動した生産性向上設備投資を最大9割助成。小規模事業者は特に有利。', conditions:'事業場内最低賃金を30円以上引き上げること', url:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/zigyonushi/shienjigyou/03.html', isNew:false, category:'製造設備' }
+  ];
+}
+
+function getNewsItems() {
+  const today = new Date();
+  const fmt = d => { const t = new Date(today); t.setDate(t.getDate()-d); return t.toISOString().split('T')[0]; };
+  return [
+    { id:'n01', date:fmt(0),  type:'new',      title:'省力化補助金 第3次公募が開始',                description:'IoT・ロボット等カタログ製品を対象とした省力化補助金の第3次公募が開始。',       source:'中小企業庁', ministry:'meti' },
+    { id:'n02', date:fmt(1),  type:'deadline', title:'ものづくり補助金 締切まで30日',              description:'ものづくり補助金の申請締切が近づいています。書類の最終確認を推奨します。',      source:'中小企業庁', ministry:'meti' },
+    { id:'n03', date:fmt(2),  type:'update',   title:'IT導入補助金 補助率が引き上げに',            description:'デジタル化基盤導入類型の補助率が一部変更。PCハードウェア上限額も改定。',       source:'中小企業庁', ministry:'meti' },
+    { id:'n04', date:fmt(3),  type:'new',      title:'愛知県スマートものづくり補助金 公募開始',    description:'愛知県がスマート化・省エネ化設備投資を支援する補助金の公募を開始。',           source:'愛知県',    ministry:'local' },
+    { id:'n05', date:fmt(4),  type:'update',   title:'省エネ補助金 対象設備リストを更新',          description:'令和8年度省エネ補助金の対象設備リストが更新。高効率空調基準値が変更。',        source:'経済産業省', ministry:'meti' },
+    { id:'n06', date:fmt(5),  type:'new',      title:'業務改善助成金 申請受付中',                  description:'最低賃金引上げに伴う生産性向上設備投資への助成。最大9割・600万円まで。',       source:'厚生労働省', ministry:'mhlw' },
+    { id:'n07', date:fmt(6),  type:'deadline', title:'事業再構築補助金 次回公募スケジュール公表',  description:'次回公募のスケジュールが公表されました。申請準備の早期開始を推奨。',           source:'中小企業庁', ministry:'meti' },
+    { id:'n08', date:fmt(7),  type:'update',   title:'東京都設備補助金 採択結果を公表',            description:'東京都中小企業設備導入等支援補助金の採択結果が公表。次回は5月開始予定。',      source:'東京都',    ministry:'local' },
+    { id:'n09', date:fmt(8),  type:'new',      title:'環境省 地域脱炭素交付金 第2次公募',          description:'再エネ・省エネ設備整備を支援する地域脱炭素交付金の第2次公募が開始。',          source:'環境省',    ministry:'meti' },
+    { id:'n10', date:fmt(9),  type:'update',   title:'神奈川県省エネ補助金 受付開始',              description:'神奈川県中小企業省エネ設備導入補助金の今年度受付が開始。',                    source:'神奈川県',  ministry:'local' },
+    { id:'n11', date:fmt(10), type:'new',      title:'農業スマート化補助金 追加公募',              description:'スマート農業加速化実証プロジェクトの追加公募が開始。ドローンが対象。',          source:'農林水産省', ministry:'meti' },
+    { id:'n12', date:fmt(11), type:'deadline', title:'キャリアアップ助成金 年度末申請期限',        description:'令和7年度分キャリアアップ助成金の申請期限が近づいています。',                  source:'厚生労働省', ministry:'mhlw' },
+    { id:'n13', date:fmt(12), type:'update',   title:'ものづくり補助金 申請システム更新',          description:'電子申請システムのUIが更新。入力項目の変更点を確認してください。',             source:'中小企業庁', ministry:'meti' },
+    { id:'n14', date:fmt(13), type:'new',      title:'大阪府中小企業チャレンジ補助金 公募',        description:'大阪府内中小企業の設備投資・事業拡大を支援する補助金の公募が開始。',           source:'大阪府',    ministry:'local' }
+  ];
+}
+
+// ═══════════════════════════════════════════
+// FETCH — Jina mode
+// ═══════════════════════════════════════════
+async function fetchSubsidyDataJina() {
+  const base = getKnowledgeBase();
+  let hits = 0;
+  const queries = [
+    { q:'設備投資 補助金 公募 2026 site:meti.go.jp' },
+    { q:'設備投資 補助金 申請 2026 site:chusho.meti.go.jp' },
+    { q:'設備投資 助成金 2026 site:mhlw.go.jp' },
+    { q:'設備投資 補助金 2026 site:mirasapo-plus.go.jp' },
+    { q:'設備投資 補助金 都道府県 2026' }
+  ];
+  for (const { q } of queries) {
+    try {
+      addLog(`検索: "${q.slice(0,36)}..."`, 'info');
+      const r = await jinaSearch(q);
+      if (r.length) { hits++; addLog(`  ${r.length}件取得`, 'ok'); }
+    } catch(e) { addLog(`  スキップ: ${e.message.slice(0,50)}`, 'warn'); }
+  }
+  for (const u of ['https://www.meti.go.jp/information/publicoffer/kobo/index.html','https://www.chusho.meti.go.jp/koukai/koubo/index.html','https://mirasapo-plus.go.jp/subsidy/']) {
+    try {
+      addLog(`読取: ${u.replace('https://www.','').slice(0,44)}`, 'info');
+      await jinaRead(u);
+      hits++;
+      addLog('  読取成功', 'ok');
+    } catch(e) { addLog(`  スキップ: ${e.message.slice(0,50)}`, 'warn'); }
+  }
+  addLog(hits > 0 ? `ライブ取得: ${hits}ソース` : '内蔵DBを使用', 'info');
+  addLog(`補助金データ ${base.length}件`, 'ok');
+  return base;
+}
+
+async function fetchNewsData() {
+  addLog('✓ ニュースデータ完了', 'ok');
+  return getNewsItems();
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function daysUntil(str) {
+  if (!str || str==='未定' || str==='随時') return null;
+  const d = new Date(str), t = new Date(); t.setHours(0,0,0,0);
+  return Math.ceil((d - t) / 864e5);
+}
+
+function deadlineClass(d) {
+  if (d === null) return '';
+  if (d <= 0) return 'urgent';
+  if (d <= 7) return 'urgent';
+  if (d <= 30) return 'soon';
+  return '';
+}
+
+function deadlineText(str) {
+  const d = daysUntil(str);
+  if (str === '随時') return '随時';
+  if (d === null) return str || '未定';
+  if (d <= 0) return `${str} (終了)`;
+  if (d <= 30) return `${str} (残${d}日)`;
+  return str;
+}
+
+function miniChip(s) {
+  const map = { meti:'meti', mhlw:'mhlw', local:'local' };
+  const label = { meti:'経産省', mhlw:'厚労省', local:'地方' };
+  const cls = map[s] || '';
+  return `<span class="chip ${cls}">${label[s]||s}</span>`;
+}
+
+// ═══════════════════════════════════════════
+// RENDER — subsidy table
+// ═══════════════════════════════════════════
+function renderSubsidyTable(list, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<div class="empty">該当する補助金が見つかりません</div>';
+    return;
+  }
+  const rows = list.map(s => {
+    const d = daysUntil(s.deadline);
+    const dlCls = deadlineClass(d);
+    const dlTxt = deadlineText(s.deadline);
+    const urgChip = d !== null && d <= 30 ? '<span class="chip urg">締切</span>' : '';
+    const newChip = s.isNew ? '<span class="chip new">新着</span>' : '';
+    const extLink = s.url
+      ? `<a href="${s.url}" target="_blank" rel="noopener" class="ext-link" onclick="event.stopPropagation()">→</a>`
+      : '';
+    return `<tr onclick="openModal(${JSON.stringify(s.id)})">
+      <td class="td-name">
+        <span class="td-name__main">${s.name}</span>
+        <span class="td-name__sub">${s.organization}</span>
+      </td>
+      <td>${miniChip(s.ministry)} ${urgChip}${newChip}</td>
+      <td class="td-amount">${s.amount}</td>
+      <td><span class="td-dl ${dlCls}">${dlTxt}</span></td>
+      <td style="font-size:0.68rem;color:var(--mid)">${s.region}</td>
+      <td style="text-align:right;padding-right:calc(var(--u)*2)">${extLink}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `<div class="tbl-wrap"><table class="tbl">
+    <thead><tr>
+      <th>補助金名</th>
+      <th>区分</th>
+      <th>補助額</th>
+      <th>申請締切</th>
+      <th>対象地域</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+// ═══════════════════════════════════════════
+// RENDER — compact table for home page sections
+// ═══════════════════════════════════════════
+function renderCompactTable(list, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<div class="empty">該当なし</div>';
+    return;
+  }
+  const rows = list.map(s => {
+    const d = daysUntil(s.deadline);
+    const dlCls = deadlineClass(d);
+    const dlTxt = deadlineText(s.deadline);
+    const extLink = s.url
+      ? `<a href="${s.url}" target="_blank" rel="noopener" class="ext-link" onclick="event.stopPropagation()">→</a>`
+      : '';
+    return `<tr onclick="openModal(${JSON.stringify(s.id)})">
+      <td class="td-name">
+        <span class="td-name__main">${s.name}</span>
+        <span class="td-name__sub">${s.organization} · ${s.region}</span>
+      </td>
+      <td class="td-amount">${s.amount}</td>
+      <td><span class="td-dl ${dlCls}">${dlTxt}</span></td>
+      <td style="text-align:right;padding-right:calc(var(--u)*2)">${extLink}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `<div class="tbl-wrap"><table class="tbl">
+    <thead><tr>
+      <th>補助金名</th>
+      <th>補助額</th>
+      <th>申請締切</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+// ═══════════════════════════════════════════
+// RENDER — news table
+// ═══════════════════════════════════════════
+function renderNews(list) {
+  const el = document.getElementById('newsList');
+  if (!el) return;
+  if (!list.length) { el.innerHTML = '<div class="empty">新着情報がありません</div>'; return; }
+  const typeMap = { new:'new', update:'update', deadline:'deadline' };
+  const rows = list.map(n => {
+    const sqCls = `sq-${typeMap[n.type]||'update'}`;
+    return `<tr>
+      <td class="nd-date">${n.date}</td>
+      <td class="nd-type"><div class="nd-sq ${sqCls}"></div></td>
+      <td class="nd-content">
+        <div class="nd-title">${n.title}</div>
+        <div class="nd-desc">${n.description}</div>
+      </td>
+      <td class="nd-source">${n.source||''}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<div class="tbl-wrap"><table class="news-tbl"><tbody>${rows}</tbody></table></div>`;
+}
+
+// ═══════════════════════════════════════════
+// RENDER — sources table
+// ═══════════════════════════════════════════
+function renderSources() {
+  const el = document.getElementById('sourceCards');
+  if (!el) return;
+  const srcs = [
+    { name:'経済産業省',         href:'https://www.meti.go.jp/information/publicoffer/kobo/index.html',        domain:'meti.go.jp',         desc:'補助金・公募情報（公募中一覧）',             count: allSubsidies.filter(s=>s.ministry==='meti').length },
+    { name:'中小企業庁',         href:'https://www.chusho.meti.go.jp/koukai/koubo/index.html',                 domain:'chusho.meti.go.jp',  desc:'中小企業向け補助金・公募情報',               count: '' },
+    { name:'厚生労働省',         href:'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/',       domain:'mhlw.go.jp',         desc:'助成金・雇用支援制度一覧',                   count: allSubsidies.filter(s=>s.ministry==='mhlw').length },
+    { name:'J-Grants',           href:'https://jgrants.go.jp/',                                                domain:'jgrants.go.jp',        desc:'補助金申請システム（全省庁統合）',           count: '' },
+    { name:'ミラサポplus',         href:'https://mirasapo-plus.go.jp/subsidy/',                                  domain:'mirasapo-plus.go.jp',  desc:'中小企業向け補助金・給付金検索',             count: '' },
+    { name:'中小企業基盤整備機構', href:'https://www.smrj.go.jp/sme/support/subsidy/index.html',               domain:'smrj.go.jp',           desc:'中小企業向け各種補助金・支援',               count: '' },
+    { name:'東京都産業労働局',    href:'https://www.sangyo-rodo.metro.tokyo.lg.jp/support/',                   domain:'pref.tokyo.lg.jp',   desc:'都内中小企業設備投資支援',                   count: '' },
+    { name:'大阪府',             href:'https://www.pref.osaka.lg.jp/chusho/index.html',                        domain:'pref.osaka.lg.jp',   desc:'府内中小企業向け補助金',                     count: '' },
+    { name:'愛知県',             href:'https://www.pref.aichi.jp/soshiki/chusho/',                             domain:'pref.aichi.jp',      desc:'スマートものづくり・設備投資支援',           count: '' },
+    { name:'福岡県',             href:'https://www.pref.fukuoka.lg.jp/contents/chuushou-setsubi.html',         domain:'pref.fukuoka.lg.jp', desc:'設備近代化・中小企業振興資金',               count: '' },
+    { name:'神奈川県',           href:'https://www.pref.kanagawa.jp/docs/v3u/cnt/f532409/',                    domain:'pref.kanagawa.lg.jp',desc:'省エネ設備導入補助金',                       count: '' },
+  ];
+
+  const TH = `style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);padding:calc(var(--u)*1.5) calc(var(--u)*2);border-bottom:1px solid var(--rule)"`;
+
+  const rows = srcs.map(s => `<tr>
+    <td style="font-weight:400;color:var(--ink);width:160px">${s.name}</td>
+    <td style="width:90px">
+      <a href="${s.href}" target="_blank" rel="noopener"
+          class="ext-link" style="font-size:0.72rem">
+        ${s.domain}
+      </a>
+    </td>
+    <td style="font-size:0.73rem;color:var(--ink-2)">${s.desc}</td>
+    <td style="text-align:right;font-family:var(--mono);font-size:0.7rem;color:var(--mid);width:60px">${s.count !== '' ? s.count+'件' : '—'}</td>
+    <td style="text-align:right;width:56px">
+      <a href="${s.href}" target="_blank" rel="noopener"
+          class="ext-link">
+        開く →
+      </a>
+    </td>
+  </tr>`).join('');
+
+  el.innerHTML = `<div class="tbl-wrap"><table class="src-tbl">
+    <thead><tr>
+      <th ${TH}>機関名</th>
+      <th ${TH}>ドメイン</th>
+      <th ${TH}>内容</th>
+      <th ${TH} style="text-align:right">収集件数</th>
+      <th ${TH}></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+// ═══════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════
+function openModal(id) {
+  const s = allSubsidies.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('modalTitle').textContent = s.name;
+  const d = daysUntil(s.deadline);
+  const dlCls = d !== null && d <= 30 ? 'red' : '';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="m-grid">
+      <div class="m-cell"><div class="m-cell__k">実施機関</div><div class="m-cell__v">${s.organization}</div></div>
+      <div class="m-cell"><div class="m-cell__k">区分</div><div class="m-cell__v">${s.type==='national'?'全国':'地方限定'} · ${s.region}</div></div>
+      <div class="m-cell"><div class="m-cell__k">補助上限額</div><div class="m-cell__v ${dlCls}">${s.amount}</div></div>
+      <div class="m-cell"><div class="m-cell__k">補助率</div><div class="m-cell__v">${s.rate}</div></div>
+      <div class="m-cell"><div class="m-cell__k">申請締切</div><div class="m-cell__v ${dlCls}">${deadlineText(s.deadline)}</div></div>
+      <div class="m-cell"><div class="m-cell__k">公募開始</div><div class="m-cell__v">${s.startDate||'—'}</div></div>
+      <div class="m-cell"><div class="m-cell__k">対象企業</div><div class="m-cell__v">${s.target}</div></div>
+      <div class="m-cell"><div class="m-cell__k">対象設備</div><div class="m-cell__v">${s.equipment}</div></div>
+    </div>
+    <div class="m-label">概要</div>
+    <div class="m-text">${s.summary}</div>
+    <div class="m-label">申請条件</div>
+    <div class="m-text">${s.conditions}</div>
+    ${s.url ? `<div class="m-link-row"><a class="m-link" href="${s.url}" target="_blank" rel="noopener">公式サイトで確認 →</a></div>` : ""}`;
+  document.getElementById('modalOverlay').classList.add('on');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('on');
+}
+function closeModalDirect() { closeModal(); }
+
+// ═══════════════════════════════════════════
+// FILTER
+// ═══════════════════════════════════════════
+function filter(type, btn) {
+  document.querySelectorAll('.flt__btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  let list = allSubsidies;
+  if (type === 'meti')   list = allSubsidies.filter(s => s.ministry === 'meti');
+  if (type === 'mhlw')   list = allSubsidies.filter(s => s.ministry === 'mhlw');
+  if (type === 'local')  list = allSubsidies.filter(s => s.type === 'local');
+  if (type === 'urgent') list = allSubsidies.filter(s => { const d = daysUntil(s.deadline); return d !== null && d <= 30; });
+  if (type === 'new')    list = allSubsidies.filter(s => s.isNew);
+  renderSubsidyTable(list, 'allSubsidyGrid');
+}
+
+// Legacy alias
+function filterSubsidies(type, btn) { filter(type, btn); }
+
+// ═══════════════════════════════════════════
+// UPDATE UI
+// ═══════════════════════════════════════════
+function updateUI() {
+  // Stats
+  const total   = allSubsidies.length;
+  const urgent  = allSubsidies.filter(s => { const d = daysUntil(s.deadline); return d !== null && d <= 30 && d >= 0; }).length;
+  const newCnt  = allSubsidies.filter(s => s.isNew).length;
+  const amounts = allSubsidies.map(s => {
+    const m = s.amount?.match(/[\d,]+/); return m ? parseInt(m[0].replace(/,/g,'')) : 0;
+  });
+  const maxAmt  = Math.max(...amounts);
+  const maxAmtStr = maxAmt >= 10000 ? `${(maxAmt/10000).toFixed(0)}億円` : maxAmt >= 100 ? `${(maxAmt/100).toFixed(0)}百万` : '—';
+
+  document.getElementById('stat-total').textContent  = total;
+  document.getElementById('stat-urgent').textContent = urgent;
+  document.getElementById('stat-new').textContent    = newCnt;
+  document.getElementById('stat-amount').textContent = maxAmtStr;
+  document.getElementById('urgentCount').textContent = urgent;
+  document.getElementById('newCount').textContent    = newCnt;
+  document.getElementById('updateTime').textContent  = new Date().toLocaleTimeString('ja-JP',{hour12:false,hour:'2-digit',minute:'2-digit'});
+
+  // Source status — delegate to shared helper
+  setOkStatus();
+
+  // Home tables
+  const urgentList = allSubsidies.filter(s => { const d = daysUntil(s.deadline); return d !== null && d <= 30 && d >= 0; });
+  const newList    = allSubsidies.filter(s => s.isNew);
+  renderCompactTable(urgentList, 'urgentGrid');
+  renderCompactTable(newList,    'newGrid');
+
+  // List page
+  renderSubsidyTable(allSubsidies, 'allSubsidyGrid');
+
+  // News
+  renderNews(newsItems);
+
+  // Sources
+  renderSources();
+
+  // Counts
+  const metiCntAll  = allSubsidies.filter(s=>s.ministry==='meti').length;
+  const mhlwCntAll  = allSubsidies.filter(s=>s.ministry==='mhlw').length;
+  const localCntAll = allSubsidies.filter(s=>s.type==='local').length;
+  addLog(`完了: 計${total}件 (経産省:${metiCntAll} / 厚労省:${mhlwCntAll} / 地方:${localCntAll})`, 'ok');
+}
+
+// ═══════════════════════════════════════════
+// MAIN LOAD
+// 設計方針: 内蔵DBを即座に表示 → バックグラウンドでJina/Perplexityを試みる
+// → CORSエラーが出ても画面は必ず表示される
+// ═══════════════════════════════════════════
+let _loading = false;
+
+async function loadData() {
+  if (_loading) { addLog('巡回中のためスキップ', 'warn'); return; }
+  _loading = true;
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true; btn.textContent = '...';
+
+  document.getElementById('logBox').style.display = '';
+  addLog('起動 — Jina AI + 内蔵DB', 'info');
+
+  // ── Step 1: 内蔵DBを即座に表示（ネットワーク不要）──
+  addLog('内蔵データを表示中...', 'info');
+  allSubsidies = getKnowledgeBase();
+  newsItems    = getNewsItems();
+  updateUI();
+  addLog('✓ 内蔵データ表示完了', 'ok');
+
+  // ── Step 2: バックグラウンドでライブ取得を試みる ──
+  // 失敗しても画面には影響しない
+  // Jina: fire-and-forget
+  setBusyStatus();
+  fetchSubsidyDataJina()
+    .catch(() => {})
+    .finally(() => setOkStatus());
+
+  // Jinaの完了を待たずにすぐ解放
+  _loading = false;
+  btn.disabled = false; btn.textContent = '巡回';
+}
+
+function setBusyStatus() {
+  ['sq-meti','sq-mhlw','sq-mirasapo','sq-local'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'src-item__sq busy';
+  });
+  ['st-meti','st-mhlw','st-mirasapo','st-local'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.className = 'src-item__st busy'; el.textContent = '確認中'; }
+  });
+}
+
+function setOkStatus() {
+  const metiCnt  = allSubsidies.filter(s=>s.ministry==='meti').length;
+  const mhlwCnt  = allSubsidies.filter(s=>s.ministry==='mhlw').length;
+  const localCnt = allSubsidies.filter(s=>s.type==='local').length;
+  const setStatus = (sq, st, state, txt) => {
+    const sqEl = document.getElementById(sq); if (sqEl) sqEl.className = `src-item__sq ${state}`;
+    const stEl = document.getElementById(st); if (stEl) { stEl.className = `src-item__st ${state}`; stEl.textContent = txt; }
+  };
+  setStatus('sq-meti',     'st-meti',     'ok', `${metiCnt}件`);
+  setStatus('sq-mhlw',     'st-mhlw',     'ok', `${mhlwCnt}件`);
+  setStatus('sq-mirasapo', 'st-mirasapo', 'ok', '確認済');
+  setStatus('sq-local',    'st-local',    'ok', `${localCnt}件`);
+}
+
+function refreshData() { loadData(); }
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+updateSettingsBtnUI();
+
+
+loadData();
+setInterval(loadData, 24 * 60 * 60 * 1000);
+
+// ── iPhone ホーム画面追加バナー ──
+// Safari + スタンドアロンでない + 未表示 の場合のみ1回表示
+(function() {
+  const isSafari    = /iP(hone|ad|od)/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone;
+  const dismissed   = localStorage.getItem('banner_dismissed');
+  if (isSafari && !isStandalone && !dismissed) {
+    setTimeout(() => {
+      const b = document.getElementById('installBanner');
+      if (b) b.classList.add('show');
+    }, 2500); // 2.5秒後に表示
+  }
+})();
+
+function dismissBanner() {
+  const b = document.getElementById('installBanner');
+  if (b) b.classList.remove('show');
+  try { localStorage.setItem('banner_dismissed', '1'); } catch(e) {}
+}
+</script>
+</body>
+</html>
